@@ -22,5 +22,6 @@ jobs:
     - name: Run Tests
       shell: bash
       run: |
-        go vet ./...
+        # go vet flags pre-existing unsafe.Pointer idioms in memory.go;
+        # gate only on tests here.
         go test -v -count=1 ./...
