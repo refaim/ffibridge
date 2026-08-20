@@ -15,10 +15,12 @@ func TestCallbackRoundTripIntegerArgs(t *testing.T) {
 	b := New(Options{})
 	t.Cleanup(func() { _ = b.Close() })
 
-	var seen []int32
+	// Callback arguments arrive normalized the way fromGo hands them out:
+	// every signed kind as int64, unsigned as uint64, ptr as uintptr.
+	var seen []int64
 	addr, err := b.NewCallback("i32(i32,i32)", func(args []any) (any, error) {
-		l := args[0].(int32)
-		r := args[1].(int32)
+		l := args[0].(int64)
+		r := args[1].(int64)
 		seen = append(seen, l, r)
 		return l + r, nil
 	})
@@ -33,8 +35,8 @@ func TestCallbackRoundTripIntegerArgs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Call: %v", err)
 	}
-	if v, ok := got.(int32); !ok || v != 42 {
-		t.Fatalf("callback result = %#v, want int32(42)", got)
+	if v, ok := got.(int64); !ok || v != 42 {
+		t.Fatalf("callback result = %#v (%T), want int64(42)", got, got)
 	}
 
 	// Negative values cross the register boundary in both directions: the
@@ -44,11 +46,11 @@ func TestCallbackRoundTripIntegerArgs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Call (negative): %v", err)
 	}
-	if v, ok := got.(int32); !ok || v != -2 {
-		t.Fatalf("callback result = %#v, want int32(-2)", got)
+	if v, ok := got.(int64); !ok || v != -2 {
+		t.Fatalf("callback result = %#v (%T), want int64(-2)", got, got)
 	}
 
-	want := []int32{20, 22, -7, 5}
+	want := []int64{20, 22, -7, 5}
 	if len(seen) != len(want) {
 		t.Fatalf("callback saw %v, want %v", seen, want)
 	}
